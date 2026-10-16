@@ -1,35 +1,67 @@
-# CMPG 325 - Network Design Project
+# Ditso Dairy Farm - Enterprise Network Architecture
 
-## Project Details
-* **Student:** Makhoba, Coby
-* **Student Number:** 46967702
-* **Project ID:** CMPG325-2026-039
-* **Client ID:** CLI-039
-* **Assigned Organisation:** Ditso Dairy Farm (Bloemhof)
-* **Industry:** Agriculture
+## 📄 Final Technical Report
+[**Read the Full CMPG 325 Technical Report (PDF)**](CMPG325_Final_Technical_Report.pdf)
 
-## Client Overview
-This repository contains the network design and Cisco Packet Tracer simulation for Ditso Dairy Farm, a working agricultural operation located in Bloemhof. The network provisions connectivity for administrative offices, farm operations, management infrastructure, and guest access, strictly adhering to the client's operational context.
+## 1. Project Overview
+This repository contains the network design, Packet Tracer simulation, and testing evidence for the Ditso Dairy Farm (Bloemhof) enterprise network. The objective was to design a scalable, segmented network infrastructure that isolates distinct agricultural functions (Administration, Farm Operations, Guest Access, and Management) into separate broadcast domains while ensuring secure inter-VLAN routing and automated IP addressing.
 
-## Network Design & Topology
-The network utilizes a **Hierarchical Extended Star** physical topology and a **Router-on-a-Stick** logical topology. 
-* **Core Layer:** Redundant Layer 3 switches to ensure high availability.
-* **Access Layer:** Dedicated Layer 2 switches for specific operational areas (Admin, Farm Ops, Guest, New Area).
+### Client Requirements & Constraints
+* **Industry:** Agriculture (Working Dairy Operation)
+* **Assigned Technical Challenge:** Intermediate switch-based VLAN segmentation.
+* **Design Constraint:** No network downtime tolerated during month-end processing (Billing/Admin).
+* **Change Request (CR2):** The client takes over an additional floor/area and requires immediate network coverage without redesigning the core architecture.
 
-## IP Addressing Plan
-The network is subnetted from the assigned **10.21.0.0/16** block. Fixed /24 subnets are utilized to establish clear segment boundaries and provide substantial headroom for future agricultural sensor network expansion.
+---
 
-| VLAN | Segment | Subnet | Gateway |
-| :--- | :--- | :--- | :--- |
-| 10 | ADMIN | 10.21.10.0/24 | 10.21.10.1 |
-| 20 | FARM-OPS | 10.21.20.0/24 | 10.21.20.1 |
-| 30 | MGMT-SERVERS| 10.21.30.0/24 | 10.21.30.1 |
-| 40 | GUEST | 10.21.40.0/24 | 10.21.40.1 |
-| 50 | NEW-AREA | 10.21.50.0/24 | 10.21.50.1 |
+## 2. Network Topology & IP Addressing
+The network utilizes an **Extended Star Topology** centered around a Cisco 4321 Router (R1) and a 2960 Core Switch, branching out to dedicated access switches for each physical area. 
 
-## Assigned Technical Challenge: VLANs
-The network demonstrates an intermediate switch-based segmentation design. Traffic is logically separated into distinct broadcast domains (VLANs 10, 20, 30, 40, 50) using 802.1Q trunking and Inter-VLAN routing via the default gateway router.
+**Subnetting Plan (Assigned Block: 10.21.0.0/16)**
+| VLAN | Segment Name | Network Subnet | Default Gateway | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **10** | ADMIN | `10.21.10.0/24` | `10.21.10.1` | Office, billing, and month-end records (DHCP) |
+| **20** | FARM-OPS | `10.21.20.0/24` | `10.21.20.1` | Milking parlour systems and herd terminals (DHCP) |
+| **30** | MGMT-SERVERS | `10.21.30.0/24` | `10.21.30.1` | Farm management server and IT admin PC (Static) |
+| **40** | GUEST | `10.21.40.0/24` | `10.21.40.1` | Visitor and vendor network access (DHCP) |
+| **50** | NEW-AREA-CR2 | `10.21.50.0/24` | `10.21.50.1` | Coverage for additional floor/area (DHCP) |
+| **99** | NATIVE-MGMT | `10.21.99.0/24` | `10.21.99.1` | Switch management infrastructure |
 
-## Constraints & Change Requests
-* **Constraint:** *No network downtime tolerated during month-end processing.* Addressed via redundant EtherChannel links between core switches, STP failover, and strict VLAN isolation for the Admin subnet.
-* **Change Request (CR2):** *Client takes over an additional floor/area.* Accommodated by extending a new access switch (`SW-NEWAREA`) and provisioning VLAN 50, integrating seamlessly without redesigning the existing baseline.
+---
+
+## 3. Configuration Highlights
+* **VLAN Segmentation:** Grouped specific switch ports to isolate agricultural department traffic, completely separating the Admin broadcast domain from Farm-Ops and Guests.
+* **Inter-VLAN Routing (Router-on-a-Stick):** Configured 802.1Q encapsulation on R1 virtual sub-interfaces (`g0/0/0.10` through `g0/0/0.99`) to route traffic centrally.
+* **DHCP Services:** Engineered router-based DHCP pools on R1 to automatically provision IP addresses to end devices, explicitly excluding the `.1` default gateway addresses.
+* **Spanning Tree Protocol (STP):** Configured PortFast and BPDU Guard on all access-layer ports. This satisfies the critical design constraint by instantly disabling ports if a switching loop is detected, preventing accidental downtime during month-end processing.
+* **Scalability (CR2):** Addressed the client change request by attaching `SW-NEWAREA` to the core switch and assigning it VLAN 50. The extended-star topology allowed this expansion without altering the existing IP or routing structures.
+
+---
+
+## 4. Troubleshooting Log
+During the implementation phase, the following issues were identified and resolved:
+1. **DHCP Broadcast Failure:** End devices initially failed to pull IP configurations. Investigation revealed that the `SW-CORE` uplink ports were misconfigured as access ports for VLAN 30. The ports were reconfigured to `switchport mode trunk` with Native VLAN 99, restoring the path for DHCP broadcasts to reach R1.
+2. **Err-Disabled Trunk Links:** Switch-to-switch connections dropped Layer 1 connectivity (red link lights). This was caused by mistakenly applying BPDU Guard to the 802.1Q trunk ports. BPDU Guard was removed from the uplinks, and the interfaces were reset using `shutdown` and `no shutdown`, restoring full connectivity.
+
+---
+
+## 5. Testing & Verification Evidence
+*(The following screenshots confirm the successful operation of the assigned networking challenges).*
+
+**Inter-VLAN Routing (Ping Test):**
+Successful ICMP echo replies across disparate VLANs (Admin PC communicating with Management Server).
+![Routing Proof](images/ping_test.png)
+
+**Automated DHCP Allocation:**
+End devices successfully leasing `10.21.X.X` configurations from the R1 DHCP pools.
+![DHCP Proof](images/dhcp_lease.png)
+
+**Switch Trunking & Routing Tables:**
+Verification of 802.1Q encapsulation on SW-CORE and active connected routes on R1.
+![Trunking Proof](images/trunk_status.png)
+![Routing Table Proof](images/routing_table.png)
+
+---
+
+## 6. Project Reflection
+This project successfully balances the Ditso Dairy Farm's need for strict operational security with straightforward connectivity. By utilizing switch-based VLAN segmentation and Spanning Tree edge-port protections, the design logically secures the administrative network without requiring expensive hardware upgrades. The modular nature of the architecture proved its value immediately by easily accommodating the CR2 facility expansion, resulting in a stable, fully routed infrastructure tailored directly to the client's agricultural operations.
