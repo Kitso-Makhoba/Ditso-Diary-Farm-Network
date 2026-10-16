@@ -54,7 +54,7 @@ Successful ICMP echo replies across disparate VLANs (Admin PC communicating with
 
 **Automated DHCP Allocation:**
 End devices successfully leasing `10.21.X.X` configurations from the R1 DHCP pools.
-![DHCP Proof](Documentation/DHCP_lease.png)
+![DHCP Proof](Documentation/DHCP_leases.png)
 
 **Switch Trunking & Routing Tables:**
 Verification of 802.1Q encapsulation on SW-CORE and active connected routes on R1.
