@@ -58,7 +58,7 @@ End devices successfully leasing `10.21.X.X` configurations from the R1 DHCP poo
 
 **Switch Trunking & Routing Tables:**
 Verification of 802.1Q encapsulation on SW-CORE and active connected routes on R1.
-![Trunking Proof](Documentation/Trunking_output_1.png)
+![Trunking Proof](Documentation/Trunking_Output_1.png)
 ![Routing Table Proof](Documentation/Routing_tables.png)
 
 ---
