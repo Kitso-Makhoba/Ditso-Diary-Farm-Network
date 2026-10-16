@@ -50,7 +50,7 @@ During the implementation phase, the following issues were identified and resolv
 
 **Inter-VLAN Routing (Ping Test):**
 Successful ICMP echo replies across disparate VLANs (Admin PC communicating with Management Server).
-![Routing Proof](images/ping_test.png)
+![Routing Proof](documentation/Ping_test.png)
 
 **Automated DHCP Allocation:**
 End devices successfully leasing `10.21.X.X` configurations from the R1 DHCP pools.
